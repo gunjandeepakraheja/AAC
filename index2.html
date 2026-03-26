@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AAC App Prototype — Early Language Support (Ages 0–5)</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #e8edf5;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 16px;
+}
+
+.page-header {
+  text-align: center;
+  margin-bottom: 20px;
+  max-width: 540px;
+}
+.page-header h1 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1a1a2e;
+  margin-bottom: 6px;
+}
+.page-header p {
+  font-size: 13px;
+  color: #6b7280;
+  line-height: 1.6;
+}
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #ede9fe;
+  color: #5b21b6;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 20px;
+  margin-bottom: 10px;
+}
+.badge-dot {
+  width: 6px; height: 6px;
+  background: #7c3aed;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+.app {
+  background: #f0f4f8;
+  border-radius: 20px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 540px;
+  min-height: 600px;
+  border: 1px solid #d1d9e6;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.10);
+}
+
+.top-bar {
+  background: #fff;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid #e5e8ec;
+}
+.child-avatar { font-size: 24px; }
+.child-name { font-size: 14px; font-weight: 600; color: #1a1a2e; }
+.child-sub { font-size: 11px; color: #6b7280; }
+.ai-badge {
+  margin-left: auto;
+  background: #ede9fe;
+  color: #5b21b6;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 20px;
+  display: flex; align-items: center; gap: 5px;
+  white-space: nowrap;
+}
+.ai-dot {
+  width: 6px; height: 6px;
+  background: #7c3aed;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+.sentence-bar {
+  background: #fff;
+  padding: 9px 12px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  border-bottom: 1px solid #e5e8ec;
+}
+.sentence-display {
+  flex: 1;
+  background: #f3f4ff;
+  border-radius: 10px;
+  padding: 8px 10px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+  border: 1.5px solid #c7d2fe;
+}
+.word-chip {
+  background: #4f46e5;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 3px 11px;
+  border-radius: 20px;
+  animation: chipIn 0.2s ease;
+  white-space: nowrap;
+}
+@keyframes chipIn { from{transform:scale(0.7);opacity:0} to{transform:scale(1);opacity:1} }
+.sentence-placeholder { color: #9ca3af; font-size: 12px; }
+
+.clear-btn {
+  background: #fee2e2;
+  color: #dc2626;
+  border: none;
+  border-radius: 10px;
+  padding: 9px 11px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.speak-btn {
+  background: #4f46e5;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 9px 13px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  flex-shrink: 0;
+  display: flex; align-items: center; gap: 5px;
+}
+.speak-btn:hover { background: #4338ca; }
+
+.screen-tabs {
+  display: flex;
+  background: #f0f4f8;
+  padding: 6px 8px 0;
+  gap: 3px;
+}
+.s-tab {
+  background: none;
+  border: none;
+  border-radius: 10px 10px 0 0;
+  padding: 7px 14px;
+  font-size: 12px;
+  cursor: pointer;
+  color: #6b7280;
+}
+.s-tab.active { background: #fff; color: #4f46e5; font-weight: 600; }
+
+.category-tabs {
+  background: #fff;
+  padding: 7px 10px;
+  display: flex;
+  gap: 5px;
+  overflow-x: auto;
+  border-bottom: 1px solid #e5e8ec;
+  scrollbar-width: none;
+}
+.category-tabs::-webkit-scrollbar { display: none; }
+.cat-tab {
+  background: #f3f4f6;
+  border: none;
+  border-radius: 20px;
+  padding: 5px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  color: #374151;
+  flex-shrink: 0;
+}
+.cat-tab.active { background: #4f46e5; color: white; }
+
+.aac-grid {
+  padding: 10px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  flex: 1;
+}
+.aac-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 12px 4px 9px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.14s;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.aac-card:hover { border-color: #a5b4fc; transform: scale(1.04); }
+.aac-card:active { transform: scale(0.94); background: #eef2ff; }
+.aac-card.ai-suggested { border-color: #7c3aed; background: #fdf4ff; }
+.aac-icon { font-size: 30px; line-height: 1; }
+.aac-label { font-size: 11px; font-weight: 500; color: #1f2937; text-align: center; line-height: 1.2; }
+.ai-tag { font-size: 9px; background: #ede9fe; color: #6d28d9; padding: 1px 5px; border-radius: 8px; font-weight: 500; }
+
+.ai-panel {
+  background: #fff;
+  border-top: 1px solid #e5e8ec;
+  padding: 9px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.ai-label { font-size: 11px; color: #6d28d9; font-weight: 600; white-space: nowrap; }
+.ai-chips { display: flex; gap: 5px; flex-wrap: wrap; }
+.sug-chip {
+  background: #ede9fe;
+  color: #5b21b6;
+  border: none;
+  border-radius: 20px;
+  padding: 4px 10px;
+  font-size: 11px;
+  cursor: pointer;
+  font-weight: 500;
+}
+.sug-chip::before { content: '+ '; font-weight: 700; }
+.reset-btn {
+  margin-left: auto;
+  background: #f3f4f6;
+  color: #374151;
+  border: none;
+  border-radius: 10px;
+  padding: 6px 11px;
+  font-size: 11px;
+  cursor: pointer;
+  white-space: nowrap;
+  font-weight: 500;
+}
+.reset-btn:hover { background: #e5e7eb; }
+
+.insights-panel {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+  overflow-y: auto;
+}
+.insight-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 12px 15px;
+  border-left: 4px solid #4f46e5;
+}
+.insight-card.warn { border-color: #f59e0b; }
+.insight-card.success { border-color: #10b981; }
+.insight-title { font-size: 13px; font-weight: 600; color: #1f2937; margin-bottom: 5px; }
+.insight-body { font-size: 12px; color: #4b5563; line-height: 1.65; }
+.bar-bg { background: #e5e7eb; border-radius: 99px; height: 7px; margin-top: 8px; }
+.bar-fill { background: #4f46e5; border-radius: 99px; height: 7px; }
+.bar-label { font-size: 11px; color: #6b7280; margin-top: 3px; display: flex; justify-content: space-between; }
+
+.vocab-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-top: 8px; }
+.vocab-item { background: #f9fafb; border-radius: 10px; padding: 9px; font-size: 12px; display: flex; align-items: center; gap: 8px; }
+.vocab-item-icon { font-size: 20px; }
+.vocab-item-name { font-weight: 600; color: #1f2937; }
+.vocab-item-reason { color: #6b7280; font-size: 10px; }
+
+.footer {
+  text-align: center;
+  margin-top: 18px;
+  font-size: 11px;
+  color: #9ca3af;
+}
+.footer a { color: #6b7280; text-decoration: none; }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <div class="badge"><div class="badge-dot"></div> AI-Powered AAC Prototype</div>
+  <h1>Early Language Support App</h1>
+  <p>An interactive concept for children ages 0–5 missing language milestones. Tap symbols to build sentences, explore AI vocabulary recommendations, and view milestone insights.</p>
+</div>
+
+<div class="app">
+
+  <div class="top-bar">
+    <div class="child-avatar">🐣</div>
+    <div>
+      <div class="child-name">Mia, age 2.5</div>
+      <div class="child-sub">AAC — Core + Activity Board</div>
+    </div>
+    <div class="ai-badge"><div class="ai-dot"></div> AI Active</div>
+  </div>
+
+  <div class="sentence-bar">
+    <div class="sentence-display" id="sentence-display">
+      <span class="sentence-placeholder" id="ph">Tap cards below to build a sentence...</span>
+    </div>
+    <button class="clear-btn" onclick="clearSentence()" title="Clear sentence">✕ Clear</button>
+    <button class="speak-btn" onclick="speakSentence()">🔊 Speak</button>
+  </div>
+
+  <div class="screen-tabs">
+    <button class="s-tab active" onclick="showTab('board',this)">Board</button>
+    <button class="s-tab" onclick="showTab('insights',this)">AI Insights</button>
+    <button class="s-tab" onclick="showTab('vocab',this)">Vocab Builder</button>
+  </div>
+
+  <div id="board-view">
+    <div class="category-tabs">
+      <button class="cat-tab active" onclick="setCategory('core',this)">⭐ Core</button>
+      <button class="cat-tab" onclick="setCategory('food',this)">🍎 Food</button>
+      <button class="cat-tab" onclick="setCategory('feelings',this)">❤️ Feelings</button>
+      <button class="cat-tab" onclick="setCategory('actions',this)">🏃 Actions</button>
+      <button class="cat-tab" onclick="setCategory('people',this)">👪 People</button>
+      <button class="cat-tab" onclick="setCategory('places',this)">🏠 Places</button>
+    </div>
+    <div class="aac-grid" id="aac-grid"></div>
+    <div class="ai-panel">
+      <div style="font-size:14px;">🤖</div>
+      <div class="ai-label">AI suggests next:</div>
+      <div class="ai-chips" id="ai-chips"></div>
+      <button class="reset-btn" onclick="fullReset()">↺ Start Over</button>
+    </div>
+  </div>
+
+  <div class="insights-panel" id="insights-view" style="display:none;">
+    <div class="insight-card success">
+      <div class="insight-title">Language milestone progress</div>
+      <div class="insight-body">Mia is combining 2-word phrases 68% of her sessions — up from 41% last week. This matches the 24-month milestone target.</div>
+      <div class="bar-bg"><div class="bar-fill" style="width:68%"></div></div>
+      <div class="bar-label"><span>2-word combinations</span><span>68%</span></div>
+    </div>
+    <div class="insight-card warn">
+      <div class="insight-title">Vocabulary gap detected</div>
+      <div class="insight-body">Mia rarely uses "more," "stop," or "help" — these are high-frequency core words for her age. AI has added these to her next 3 sessions automatically.</div>
+    </div>
+    <div class="insight-card">
+      <div class="insight-title">AI vocabulary recommendation</div>
+      <div class="insight-body">Based on Mia's farm animal interest this week, AI added: <strong>cow, hay, barn, loud</strong> to her activity board. Contextual vocabulary builds faster retention.</div>
+    </div>
+    <div class="insight-card success">
+      <div class="insight-title">Session summary — today</div>
+      <div class="insight-body">14 unique words used · 6 two-word phrases · 2 spontaneous requests ("more milk", "all done"). AI flagged 3 words for reinforcement tomorrow.</div>
+    </div>
+  </div>
+
+  <div class="insights-panel" id="vocab-view" style="display:none;">
+    <div style="background:#f0fdf4; border-radius:14px; padding:14px 16px; border:1px solid #bbf7d0;">
+      <div style="font-size:13px; font-weight:600; color:#166534; margin-bottom:6px;">How AI builds Mia's vocabulary</div>
+      <div style="font-size:12px; color:#15803d; line-height:1.75;">
+        1. Analyzes which core words she's missing for her age band (24–30 months)<br>
+        2. Watches for repeated interests across sessions (farm, water, music)<br>
+        3. Introduces 3–5 new words per week using spaced repetition<br>
+        4. Surfaces "just right" words — one step above current level
+      </div>
+    </div>
+    <div class="insight-card">
+      <div class="insight-title">This week's AI-curated words</div>
+      <div class="vocab-grid">
+        <div class="vocab-item"><div class="vocab-item-icon">🐄</div><div><div class="vocab-item-name">cow</div><div class="vocab-item-reason">farm interest match</div></div></div>
+        <div class="vocab-item"><div class="vocab-item-icon">🆘</div><div><div class="vocab-item-name">help</div><div class="vocab-item-reason">core word gap</div></div></div>
+        <div class="vocab-item"><div class="vocab-item-icon">🎵</div><div><div class="vocab-item-name">loud</div><div class="vocab-item-reason">music theme</div></div></div>
+        <div class="vocab-item"><div class="vocab-item-icon">🛑</div><div><div class="vocab-item-name">stop</div><div class="vocab-item-reason">core word gap</div></div></div>
+      </div>
+    </div>
+    <div style="background:#fff; border-radius:14px; padding:14px 16px; border:1px solid #e5e7eb;">
+      <div style="font-size:13px; font-weight:600; color:#1f2937; margin-bottom:8px;">Upcoming word introductions</div>
+      <div style="font-size:12px; color:#4b5563; line-height:1.75;">
+        <strong>Week 2:</strong> open, close, on, off, again<br>
+        <strong>Week 3:</strong> mine, yours, turn, wait, loud<br>
+        <strong>Week 4:</strong> because, different, same, next
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  Prototype concept · Built with AI · For demonstration purposes only<br>
+  <a href="https://claude.ai">Made with Claude</a>
+</div>
+
+<script>
+const VOCAB = {
+  core: [
+    {icon:'✅',label:'yes',ai:false},{icon:'❌',label:'no',ai:false},
+    {icon:'➕',label:'more',ai:true},{icon:'🏁',label:'all done',ai:false},
+    {icon:'🆘',label:'help',ai:true},{icon:'🛑',label:'stop',ai:true},
+    {icon:'❤️',label:'want',ai:false},{icon:'🚶',label:'go',ai:false},
+    {icon:'👁️',label:'look',ai:false},{icon:'🔥',label:'hot',ai:false},
+    {icon:'🧊',label:'cold',ai:false},{icon:'😮',label:'big',ai:false},
+  ],
+  food: [
+    {icon:'🍎',label:'apple',ai:false},{icon:'🥛',label:'milk',ai:false},
+    {icon:'🍌',label:'banana',ai:false},{icon:'🧀',label:'cheese',ai:false},
+    {icon:'🍪',label:'cookie',ai:false},{icon:'🍞',label:'bread',ai:false},
+    {icon:'🥕',label:'carrot',ai:false},{icon:'🍇',label:'grapes',ai:false},
+    {icon:'🧃',label:'juice',ai:false},{icon:'🥚',label:'egg',ai:false},
+    {icon:'🍦',label:'ice cream',ai:false},{icon:'🥞',label:'pancake',ai:true},
+  ],
+  feelings: [
+    {icon:'😊',label:'happy',ai:false},{icon:'😢',label:'sad',ai:false},
+    {icon:'😡',label:'mad',ai:false},{icon:'😨',label:'scared',ai:false},
+    {icon:'🤒',label:'sick',ai:false},{icon:'😴',label:'tired',ai:false},
+    {icon:'🤗',label:'hug',ai:false},{icon:'🥳',label:'excited',ai:true},
+    {icon:'😤',label:'frustrated',ai:true},{icon:'🥰',label:'love',ai:false},
+    {icon:'👍',label:'good',ai:false},{icon:'👎',label:'bad',ai:false},
+  ],
+  actions: [
+    {icon:'🏃',label:'run',ai:false},{icon:'🤸',label:'jump',ai:false},
+    {icon:'🎵',label:'sing',ai:false},{icon:'🖼️',label:'draw',ai:false},
+    {icon:'📖',label:'read',ai:false},{icon:'😴',label:'sleep',ai:false},
+    {icon:'🍽️',label:'eat',ai:false},{icon:'🥤',label:'drink',ai:false},
+    {icon:'🎮',label:'play',ai:false},{icon:'💃',label:'dance',ai:true},
+    {icon:'🤣',label:'laugh',ai:false},{icon:'👋',label:'wave',ai:true},
+  ],
+  people: [
+    {icon:'👩',label:'mom',ai:false},{icon:'👨',label:'dad',ai:false},
+    {icon:'👧',label:'me',ai:false},{icon:'👶',label:'baby',ai:false},
+    {icon:'🧑',label:'friend',ai:false},{icon:'👴',label:'grandpa',ai:false},
+    {icon:'👵',label:'grandma',ai:false},{icon:'🐕',label:'dog',ai:false},
+    {icon:'🐈',label:'cat',ai:false},{icon:'👧‍🦱',label:'sister',ai:false},
+    {icon:'👦',label:'brother',ai:false},{icon:'🤝',label:'we',ai:false},
+  ],
+  places: [
+    {icon:'🏠',label:'home',ai:false},{icon:'🏫',label:'school',ai:false},
+    {icon:'🌳',label:'outside',ai:false},{icon:'🚿',label:'bathroom',ai:false},
+    {icon:'🛏️',label:'bedroom',ai:false},{icon:'🍽️',label:'kitchen',ai:false},
+    {icon:'🚗',label:'car',ai:false},{icon:'🌳',label:'park',ai:true},
+    {icon:'🏊',label:'pool',ai:true},{icon:'📚',label:'library',ai:true},
+    {icon:'🎡',label:'playground',ai:false},{icon:'🏥',label:'doctor',ai:false},
+  ]
+};
+
+const SUGGESTIONS = {
+  core:['play','eat','go'],
+  food:['more','want','yummy'],
+  feelings:['want','hug','help'],
+  actions:['outside','me','now'],
+  people:['want','with','go'],
+  places:['go','now','outside']
+};
+
+let sentence = [];
+let currentCat = 'core';
+
+function renderGrid(cat) {
+  const grid = document.getElementById('aac-grid');
+  grid.innerHTML = (VOCAB[cat]||VOCAB.core).map(item => `
+    <div class="aac-card${item.ai?' ai-suggested':''}" onclick="addWord('${item.label}')">
+      <div class="aac-icon">${item.icon}</div>
+      <div class="aac-label">${item.label}</div>
+      ${item.ai ? '<div class="ai-tag">AI added</div>' : ''}
+    </div>
+  `).join('');
+}
+
+function renderSuggestions(cat) {
+  document.getElementById('ai-chips').innerHTML =
+    (SUGGESTIONS[cat]||[]).map(w=>`<button class="sug-chip" onclick="addWord('${w}')">${w}</button>`).join('');
+}
+
+function setCategory(cat, el) {
+  currentCat = cat;
+  document.querySelectorAll('.cat-tab').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  renderGrid(cat);
+  renderSuggestions(cat);
+}
+
+function addWord(word) {
+  sentence.push(word);
+  const display = document.getElementById('sentence-display');
+  const ph = document.getElementById('ph');
+  if (ph) ph.remove();
+  const chip = document.createElement('div');
+  chip.className = 'word-chip';
+  chip.textContent = word;
+  display.appendChild(chip);
+}
+
+function clearSentence() {
+  sentence = [];
+  document.getElementById('sentence-display').innerHTML =
+    '<span class="sentence-placeholder" id="ph">Tap cards below to build a sentence...</span>';
+}
+
+function fullReset() {
+  clearSentence();
+  const firstTab = document.querySelector('.cat-tab');
+  document.querySelectorAll('.cat-tab').forEach(b=>b.classList.remove('active'));
+  firstTab.classList.add('active');
+  setCategory('core', firstTab);
+}
+
+function speakSentence() {
+  if (!sentence.length) return;
+  if ('speechSynthesis' in window) {
+    const u = new SpeechSynthesisUtterance(sentence.join(' '));
+    u.rate = 0.85; u.pitch = 1.1;
+    speechSynthesis.speak(u);
+  }
+}
+
+function showTab(tab, el) {
+  document.querySelectorAll('.s-tab').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('board-view').style.display = tab==='board' ? 'block' : 'none';
+  document.getElementById('insights-view').style.display = tab==='insights' ? 'flex' : 'none';
+  document.getElementById('vocab-view').style.display = tab==='vocab' ? 'flex' : 'none';
+}
+
+renderGrid('core');
+renderSuggestions('core');
+</script>
+</body>
+</html>
